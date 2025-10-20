@@ -1,0 +1,1159 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>文件清单生成器</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📁</text></svg>">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --primary: #667eea;
+  --primary-dark: #5a6fd8;
+  --secondary: #764ba2;
+  --light: #f8f9ff;
+  --dark: #333;
+  --gray: #6c757d;
+  --success: #28a745;
+  --danger: #dc3545;
+  --warning: #ffc107;
+  --info: #17a2b8;
+  --border-radius: 16px;
+  --box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+  --transition: all 0.3s ease;
+}
+
+body {
+  font-family: 'Segoe UI', 'Microsoft YaHei', Arial, sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  color: var(--dark);
+  line-height: 1.6;
+}
+
+.container {
+  background: #fff;
+  border-radius: var(--border-radius);
+  box-shadow: var(--box-shadow);
+  padding: 40px;
+  max-width: 1000px;
+  width: 100%;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+  animation: fadeIn 0.8s ease-out;
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 6px;
+  background: linear-gradient(45deg, var(--primary), var(--secondary));
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.header {
+  margin-bottom: 30px;
+  position: relative;
+}
+
+.header h1 {
+  font-size: 38px;
+  margin-bottom: 15px;
+  background: linear-gradient(45deg, var(--primary), var(--secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.header p {
+  color: var(--gray);
+  margin-bottom: 8px;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.select-area {
+  border: 3px dashed #ddd;
+  border-radius: var(--border-radius);
+  padding: 50px 20px;
+  margin-bottom: 30px;
+  cursor: pointer;
+  transition: var(--transition);
+  position: relative;
+  background: var(--light);
+  backdrop-filter: blur(5px);
+}
+
+.select-area:hover {
+  border-color: var(--primary);
+  background: rgba(102, 126, 234, 0.08);
+  transform: translateY(-5px);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+}
+
+.select-icon {
+  font-size: 70px;
+  color: #ddd;
+  margin-bottom: 20px;
+  transition: var(--transition);
+  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
+}
+
+.select-area:hover .select-icon {
+  color: var(--primary);
+  transform: scale(1.15);
+}
+
+.select-text {
+  font-size: 22px;
+  font-weight: 700;
+  color: #555;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.select-hint {
+  color: #888;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+#fileInput {
+  display: none;
+}
+
+.stats-container {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  gap: 15px;
+}
+
+.stat-card {
+  flex: 1;
+  background: var(--light);
+  padding: 20px;
+  border-radius: var(--border-radius);
+  text-align: center;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+  transition: var(--transition);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(45deg, var(--primary), var(--secondary));
+}
+
+.stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 25px rgba(0, 0, 0, 0.12);
+}
+
+.stat-icon {
+  font-size: 28px;
+  margin-bottom: 12px;
+  color: var(--primary);
+  background: rgba(102, 126, 234, 0.1);
+  width: 60px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+
+.stat-value {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--primary);
+  margin-bottom: 5px;
+}
+
+.stat-label {
+  font-size: 15px;
+  color: var(--gray);
+  font-weight: 600;
+}
+
+.file-filter {
+  background: var(--light);
+  padding: 25px;
+  border-radius: var(--border-radius);
+  margin-bottom: 20px;
+  text-align: left;
+  display: none;
+  animation: slideDown 0.5s ease-out;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+  backdrop-filter: blur(5px);
+}
+
+.file-filter.show {
+  display: block;
+}
+
+.filter-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.filter-title {
+  font-weight: 700;
+  color: var(--dark);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 18px;
+}
+
+.filter-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.filter-actions button {
+  padding: 8px 16px;
+  border: 2px solid var(--primary);
+  background: transparent;
+  color: var(--primary);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: var(--transition);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.filter-actions button:hover {
+  background: var(--primary);
+  color: white;
+  transform: translateY(-2px);
+}
+
+.filter-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 12px;
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 15px;
+  border: 1px solid #eee;
+  border-radius: 12px;
+  background: white;
+  box-shadow: inset 0 2px 5px rgba(0,0,0,0.05);
+}
+
+.filter-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border-radius: 8px;
+  transition: var(--transition);
+}
+
+.filter-item:hover {
+  background: rgba(102, 126, 234, 0.05);
+}
+
+.filter-item input {
+  margin: 0;
+  transform: scale(1.2);
+}
+
+.file-list {
+  max-height: 400px;
+  overflow-y: auto;
+  border: 1px solid #eee;
+  border-radius: var(--border-radius);
+  padding: 25px;
+  margin-bottom: 20px;
+  background: var(--light);
+  display: none;
+  text-align: left;
+  transition: var(--transition);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+  backdrop-filter: blur(5px);
+}
+
+.file-list.show {
+  display: block;
+  animation: slideDown 0.5s ease-out;
+}
+
+@keyframes slideDown {
+  from { opacity: 0; max-height: 0; }
+  to { opacity: 1; max-height: 400px; }
+}
+
+.file-list h3 {
+  margin-bottom: 20px;
+  color: var(--dark);
+  text-align: center;
+  border-bottom: 2px solid #eee;
+  padding-bottom: 15px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  font-size: 20px;
+}
+
+.file-item {
+  padding: 15px 20px;
+  margin-bottom: 10px;
+  background: #fff;
+  border-left: 5px solid var(--primary);
+  border-radius: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  transition: var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.file-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
+  transform: translateX(-100%);
+}
+
+.file-item:hover {
+  transform: translateX(8px);
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+  border-left-color: var(--secondary);
+}
+
+.file-item:hover::before {
+  transform: translateX(100%);
+  transition: transform 0.6s;
+}
+
+.file-name {
+  flex: 1;
+  font-size: 15px;
+  color: var(--dark);
+  font-weight: 500;
+}
+
+.file-size {
+  color: var(--gray);
+  font-size: 14px;
+  margin-left: 15px;
+  font-weight: 600;
+  background: rgba(108, 117, 125, 0.1);
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+.btn-generate {
+  background: linear-gradient(45deg, var(--primary), var(--secondary));
+  color: #fff;
+  border: none;
+  padding: 18px 45px;
+  border-radius: 30px;
+  font-size: 18px;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+  display: none;
+  transition: var(--transition);
+  font-weight: 700;
+  margin-top: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-generate::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  transition: left 0.5s;
+}
+
+.btn-generate:hover, .btn-generate:focus {
+  transform: translateY(-5px);
+  box-shadow: 0 12px 25px rgba(102, 126, 234, 0.5);
+  background: linear-gradient(45deg, var(--primary-dark), var(--secondary));
+}
+
+.btn-generate:hover::before {
+  left: 100%;
+}
+
+.btn-generate:active {
+  transform: translateY(-2px);
+}
+
+.status {
+  margin-top: 20px;
+  padding: 18px;
+  border-radius: var(--border-radius);
+  font-size: 15px;
+  display: none;
+  animation: fadeIn 0.5s ease-out;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: opacity 0.5s, transform 0.5s;
+  backdrop-filter: blur(5px);
+  font-weight: 500;
+}
+
+.status.show {
+  display: block;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.status.success {
+  background: #d4edda;
+  color: #155724;
+  border: 2px solid #c3e6cb;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 4px 10px rgba(40, 167, 69, 0.2);
+}
+
+.status.error {
+  background: #f8d7da;
+  color: #721c24;
+  border: 2px solid #f5c6cb;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 4px 10px rgba(220, 53, 69, 0.2);
+}
+
+.status.info {
+  background: #d1ecf1;
+  color: #0c5460;
+  border: 2px solid #bee5eb;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 4px 10px rgba(23, 162, 184, 0.2);
+}
+
+.folder-info {
+  margin-top: 15px;
+  padding: 18px;
+  background: #e9ecef;
+  border-radius: var(--border-radius);
+  font-size: 15px;
+  color: #495057;
+  display: none;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 500;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+}
+
+.folder-info.show {
+  display: flex;
+  animation: fadeIn 0.5s ease-out;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 10px;
+  background-color: #e9ecef;
+  border-radius: 5px;
+  margin: 20px 0;
+  overflow: hidden;
+  display: none;
+  box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.progress {
+  height: 100%;
+  background: linear-gradient(45deg, var(--primary), var(--secondary));
+  width: 0%;
+  transition: width 0.5s ease;
+  border-radius: 5px;
+}
+
+.file-type {
+  display: inline-block;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  margin-left: 10px;
+  background: #e9ecef;
+  color: #495057;
+  font-weight: 600;
+}
+
+/* 键盘导航焦点样式 */
+.select-area:focus, .btn-generate:focus {
+  outline: 3px solid var(--primary);
+  outline-offset: 3px;
+}
+
+/* 滚动条样式 */
+.file-list::-webkit-scrollbar,
+.filter-list::-webkit-scrollbar {
+  width: 10px;
+}
+
+.file-list::-webkit-scrollbar-track,
+.filter-list::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.file-list::-webkit-scrollbar-thumb,
+.filter-list::-webkit-scrollbar-thumb {
+  background: var(--primary);
+  border-radius: 10px;
+}
+
+.file-list::-webkit-scrollbar-thumb:hover,
+.filter-list::-webkit-scrollbar-thumb:hover {
+  background: var(--primary-dark);
+}
+
+/* 页脚样式 */
+.footer {
+  margin-top: 40px;
+  padding-top: 25px;
+  border-top: 2px solid #eee;
+  font-size: 15px;
+  color: var(--gray);
+  text-align: center;
+}
+
+.footer-content {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.footer-info {
+  display: flex;
+  justify-content: center;
+  gap: 25px;
+  flex-wrap: wrap;
+}
+
+.footer-info div {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 15px;
+  background: rgba(108, 117, 125, 0.08);
+  border-radius: 20px;
+  transition: var(--transition);
+}
+
+.footer-info div:hover {
+  background: rgba(108, 117, 125, 0.15);
+  transform: translateY(-2px);
+}
+
+.footer a {
+  color: var(--primary);
+  text-decoration: none;
+  transition: var(--transition);
+  font-weight: 600;
+}
+
+.footer a:hover {
+  color: var(--secondary);
+  text-decoration: underline;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .container {
+    padding: 25px;
+  }
+  
+  .header h1 {
+    font-size: 30px;
+  }
+  
+  .stats-container {
+    flex-direction: column;
+  }
+  
+  .select-area {
+    padding: 35px 15px;
+  }
+  
+  .filter-list {
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  }
+  
+  .footer-info {
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  .btn-generate {
+    padding: 16px 35px;
+    font-size: 16px;
+  }
+}
+
+/* 粒子背景效果 */
+.particles {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.particle {
+  position: absolute;
+  background: rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  animation: float 15s infinite linear;
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-1000px) rotate(720deg);
+    opacity: 0;
+  }
+}
+</style>
+</head>
+<body>
+<!-- 粒子背景 -->
+<div class="particles" id="particles"></div>
+
+<div class="container">
+  <div class="header">
+    <h1><i class="fas fa-folder-open"></i>文件清单生成器</h1>
+    <p><i class="fas fa-info-circle"></i>点击下方区域选择文件夹</p>
+    <p><i class="fas fa-filter"></i>仅显示根目录文件，支持按文件类型筛选</p>
+  </div>
+
+  <div class="select-area" id="selectArea" tabindex="0">
+    <div class="select-icon">📂</div>
+    <div class="select-text"><i class="fas fa-mouse-pointer"></i>点击选择文件夹</div>
+    <div class="select-hint"><i class="fas fa-exclamation-circle"></i>仅会列出选中目录根层文件，不含子文件夹</div>
+  </div>
+  <input type="file" id="fileInput" webkitdirectory directory multiple>
+
+  <div class="stats-container" id="statsContainer" style="display: none;">
+    <div class="stat-card">
+      <div class="stat-icon"><i class="fas fa-file"></i></div>
+      <div class="stat-value" id="fileCount">0</div>
+      <div class="stat-label">文件数量</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon"><i class="fas fa-weight-hanging"></i></div>
+      <div class="stat-value" id="totalSize">0 B</div>
+      <div class="stat-label">总大小</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon"><i class="fas fa-folder"></i></div>
+      <div class="stat-value" id="folderName">-</div>
+      <div class="stat-label">文件夹名称</div>
+    </div>
+  </div>
+
+  <div class="file-filter" id="fileFilter">
+    <div class="filter-header">
+      <div class="filter-title">
+        <i class="fas fa-filter"></i>
+        <span>文件类型筛选 (选择要导出的文件类型)</span>
+      </div>
+      <div class="filter-actions">
+        <button id="selectAllTypes">全选</button>
+        <button id="deselectAllTypes">取消全选</button>
+      </div>
+    </div>
+    <div class="filter-list" id="filterList"></div>
+  </div>
+
+  <div class="file-list" id="fileList">
+    <h3><i class="fas fa-list"></i>文件清单预览</h3>
+    <div id="fileItems"></div>
+  </div>
+  
+  <button class="btn-generate" id="btnGenerate" tabindex="0">
+    <i class="fas fa-file-excel"></i>生成Excel文件
+  </button>
+  
+  <div class="status" id="status"></div>
+  
+  <div class="footer">
+    <div class="footer-content">
+      <div class="footer-info">
+        <div><i class="fas fa-user"></i> 作者：技术开发二部</div>
+        <div><i class="fas fa-code-branch"></i> 版本：V1.1.0</div>
+        <div><i class="fas fa-calendar"></i> 更新日期：2025年10月</div>
+      </div>
+      <div class="footer-info">
+        <div><i class="fab fa-github"></i> GitHub：<a href="https://github.com/caifugao110/FileList_Generator" target="_blank">https://github.com/caifugao110/FileList_Generator</a></div>
+      </div>
+      <div class="footer-info">
+        <div><i class="fas fa-info-circle"></i> 功能说明：本工具用于快速生成文件夹内文件的详细清单，支持文件类型筛选，生成符合要求的的Excel文件。</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// 创建粒子背景
+function createParticles() {
+  const particlesContainer = document.getElementById('particles');
+  const particleCount = 30;
+  
+  for (let i = 0; i < particleCount; i++) {
+    const particle = document.createElement('div');
+    particle.classList.add('particle');
+    
+    const size = Math.random() * 20 + 5;
+    const left = Math.random() * 100;
+    const animationDuration = Math.random() * 20 + 10;
+    const animationDelay = Math.random() * 5;
+    
+    particle.style.width = `${size}px`;
+    particle.style.height = `${size}px`;
+    particle.style.left = `${left}%`;
+    particle.style.animationDuration = `${animationDuration}s`;
+    particle.style.animationDelay = `${animationDelay}s`;
+    
+    particlesContainer.appendChild(particle);
+  }
+}
+
+// 获取DOM元素
+const selectArea = document.getElementById('selectArea');
+const fileInput = document.getElementById('fileInput');
+const fileList = document.getElementById('fileList');
+const fileItems = document.getElementById('fileItems');
+const btnGenerate = document.getElementById('btnGenerate');
+const statusBox = document.getElementById('status');
+const statsContainer = document.getElementById('statsContainer');
+const fileCountElement = document.getElementById('fileCount');
+const totalSizeElement = document.getElementById('totalSize');
+const folderNameElement = document.getElementById('folderName');
+const fileFilter = document.getElementById('fileFilter');
+const filterList = document.getElementById('filterList');
+const selectAllTypes = document.getElementById('selectAllTypes');
+const deselectAllTypes = document.getElementById('deselectAllTypes');
+
+// 全局变量
+let selectedFiles = [];
+let folderName = '';
+let fileTypes = new Set();
+let selectedFileTypes = new Set();
+
+// 页面加载完成后的初始化
+document.addEventListener('DOMContentLoaded', function() {
+  createParticles();
+  showStatus('欢迎使用文件清单生成器！请点击选择文件夹按钮选择文件夹。', 'info');
+  
+  // 设置键盘导航
+  selectArea.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      fileInput.click();
+    }
+  });
+  
+  btnGenerate.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      generateExcel();
+    }
+  });
+  
+  // 文件类型筛选事件
+  selectAllTypes.addEventListener('click', function() {
+    document.querySelectorAll('.file-type-checkbox').forEach(checkbox => {
+      checkbox.checked = true;
+      selectedFileTypes.add(checkbox.value);
+    });
+    updateFileList();
+  });
+  
+  deselectAllTypes.addEventListener('click', function() {
+    document.querySelectorAll('.file-type-checkbox').forEach(checkbox => {
+      checkbox.checked = false;
+      selectedFileTypes.delete(checkbox.value);
+    });
+    updateFileList();
+  });
+});
+
+// 点击选择文件夹
+selectArea.addEventListener('click', () => fileInput.click());
+
+// 文件选择事件
+fileInput.addEventListener('change', e => {
+  processFiles(Array.from(e.target.files));
+});
+
+// 处理文件
+function processFiles(files) {
+  // 过滤掉.db文件和隐藏文件
+  selectedFiles = files.filter(f => {
+    const fileName = f.name.toLowerCase();
+    return !fileName.endsWith('.db') && !f.name.startsWith('.');
+  });
+  
+  // 只保留根目录文件（webkitRelativePath 不含 "/" 或为空）
+  selectedFiles = selectedFiles.filter(f => {
+    const path = f.webkitRelativePath || '';
+    return path.split('/').length === 2; // 文件夹名/文件名
+  });
+  
+  selectedFiles.sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'));
+  
+  if (selectedFiles.length === 0) {
+    showStatus('未选中任何文件', 'error');
+    return;
+  }
+  
+  // 获取文件夹名
+  if (selectedFiles.length > 0 && selectedFiles[0].webkitRelativePath) {
+    folderName = selectedFiles[0].webkitRelativePath.split('/')[0];
+  }
+  
+  // 提取文件类型
+  extractFileTypes();
+  
+  displayList();
+  updateStats();
+  btnGenerate.style.display = 'flex';
+  showStatus(`已成功加载 ${selectedFiles.length} 个文件，包含 ${fileTypes.size} 种文件类型`, 'success');
+  
+  // 平滑滚动到文件列表
+  setTimeout(() => {
+    fileList.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 300);
+}
+
+// 提取文件类型
+function extractFileTypes() {
+  fileTypes.clear();
+  selectedFileTypes.clear();
+  
+  selectedFiles.forEach(file => {
+    const fileName = file.name;
+    const dotIndex = fileName.lastIndexOf('.');
+    const fileType = dotIndex !== -1 ? fileName.substring(dotIndex + 1).toUpperCase() : '无扩展名';
+    fileTypes.add(fileType);
+    selectedFileTypes.add(fileType);
+  });
+  
+  // 更新文件类型筛选器
+  updateFileTypeFilter();
+}
+
+// 更新文件类型筛选器
+function updateFileTypeFilter() {
+  filterList.innerHTML = '';
+  
+  fileTypes.forEach(fileType => {
+    const filterItem = document.createElement('div');
+    filterItem.className = 'filter-item';
+    
+    const checkbox = document.createElement('input');
+    checkbox.type = 'checkbox';
+    checkbox.id = `type-${fileType}`;
+    checkbox.className = 'file-type-checkbox';
+    checkbox.value = fileType;
+    checkbox.checked = true;
+    
+    checkbox.addEventListener('change', function() {
+      if (this.checked) {
+        selectedFileTypes.add(fileType);
+      } else {
+        selectedFileTypes.delete(fileType);
+      }
+      updateFileList();
+    });
+    
+    const label = document.createElement('label');
+    label.htmlFor = `type-${fileType}`;
+    label.textContent = fileType;
+    
+    filterItem.appendChild(checkbox);
+    filterItem.appendChild(label);
+    filterList.appendChild(filterItem);
+  });
+  
+  fileFilter.classList.add('show');
+}
+
+// 更新文件列表显示
+function updateFileList() {
+  fileItems.innerHTML = '';
+  
+  const filteredFiles = selectedFiles.filter(file => {
+    const fileName = file.name;
+    const dotIndex = fileName.lastIndexOf('.');
+    const fileType = dotIndex !== -1 ? fileName.substring(dotIndex + 1).toUpperCase() : '无扩展名';
+    return selectedFileTypes.has(fileType);
+  });
+  
+  filteredFiles.forEach((f, i) => {
+    const div = document.createElement('div');
+    div.className = 'file-item';
+    
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'file-name';
+    nameSpan.textContent = `${i + 1}. ${f.name}`;
+    
+    const sizeSpan = document.createElement('span');
+    sizeSpan.className = 'file-size';
+    sizeSpan.textContent = formatFileSize(f.size);
+    
+    div.appendChild(nameSpan);
+    div.appendChild(sizeSpan);
+    fileItems.appendChild(div);
+  });
+  
+  fileCountElement.textContent = filteredFiles.length;
+  
+  if (filteredFiles.length === 0) {
+    fileItems.innerHTML = '<div style="text-align: center; padding: 20px; color: #6c757d;">没有符合筛选条件的文件</div>';
+  }
+  
+  fileList.classList.add('show');
+}
+
+// 更新统计信息
+function updateStats() {
+  const fileCount = selectedFiles.length;
+  const totalSize = selectedFiles.reduce((sum, file) => sum + file.size, 0);
+  
+  fileCountElement.textContent = fileCount;
+  totalSizeElement.textContent = formatFileSize(totalSize);
+  folderNameElement.textContent = folderName || '未知文件夹';
+  
+  statsContainer.style.display = 'flex';
+}
+
+function displayList() {
+  updateFileList();
+}
+
+// 格式化文件大小
+function formatFileSize(bytes) {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+// 生成Excel
+function generateExcel() {
+  btnGenerate.style.display = 'none';
+  
+  // 显示生成状态
+  showStatus('<i class="fas fa-spinner fa-spin"></i> 正在生成Excel文件，请稍候...', 'info');
+  
+  setTimeout(() => {
+    const filteredFiles = selectedFiles.filter(file => {
+      const fileName = file.name;
+      const dotIndex = fileName.lastIndexOf('.');
+      const fileType = dotIndex !== -1 ? fileName.substring(dotIndex + 1).toUpperCase() : '无扩展名';
+      return selectedFileTypes.has(fileType);
+    });
+    
+    const html = genExcel(filteredFiles);
+    downloadExcel(html);
+    btnGenerate.style.display = 'flex';
+    showStatus('<i class="fas fa-check-circle"></i> Excel文件已生成并开始下载', 'success');
+  }, 1000);
+}
+
+// 绑定生成按钮点击事件
+btnGenerate.addEventListener('click', generateExcel);
+
+// 生成Excel内容
+function genExcel(files) {
+  const totalSize = files.reduce((sum, file) => sum + file.size, 0);
+  const fileExtensions = [...new Set(files.map(f => {
+    const parts = f.name.split('.');
+    return parts.length > 1 ? parts.pop().toUpperCase() : '无扩展名';
+  }))];
+  
+  let h = '<meta charset="utf-8"><style>'
+      + 'body { font-family: "Segoe UI", Arial, sans-serif; margin: 20px; color: #333; background: #f8f9fa; }'
+      + 'h1 { text-align: center; color: #2c3e50; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 3px solid #3498db; font-size: 28px; font-weight: 700; }'
+      + 'table { border-collapse: collapse; width: 100%; font-size: 14px; margin-bottom: 25px; box-shadow: 0 5px 15px rgba(0,0,0,0.08); border-radius: 10px; overflow: hidden; }'
+      + 'th, td { border: 1px solid #e0e0e0; padding: 14px 16px; text-align: left; }'
+      + 'th { background: linear-gradient(to bottom, #3498db, #2980b9); color: white; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; font-size: 15px; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }'
+      + 'tr:nth-child(even) { background: #f8f9fa; }'
+      + 'tr:hover { background: #e8f4fd; }'
+      + '.summary { background: white; padding: 25px; border-radius: 10px; margin-bottom: 30px; box-shadow: 0 5px 15px rgba(0,0,0,0.08); border-left: 5px solid #3498db; }'
+      + '.summary p { margin: 10px 0; font-size: 15px; }'
+      + '.summary strong { color: #2c3e50; }'
+      + '.header-row { background: #2c3e50 !important; color: white; font-weight: bold; text-align: center; font-size: 18px; }'
+      + '.file-type { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 11px; background: #e9ecef; color: #495057; font-weight: 600; }'
+      + '.footer { text-align: center; margin-top: 30px; color: #7f8c8d; font-size: 13px; border-top: 1px solid #ecf0f1; padding-top: 20px; }'
+      + '</style>';
+  
+  h += '<h1>📁 文件清单</h1>';
+  
+  // 摘要信息
+  h += '<div class="summary">';
+  h += '<p><strong>📂 文件夹名称:</strong> ' + esc(folderName || '未知文件夹') + '</p>';
+  h += '<p><strong>📅 生成时间:</strong> ' + new Date().toLocaleString('zh-CN') + '</p>';
+  h += '<p><strong>📊 文件总数:</strong> ' + files.length + ' 个文件</p>';
+  h += '<p><strong>💾 总大小:</strong> ' + formatFileSize(totalSize) + '</p>';
+  h += '<p><strong>🔧 包含的文件类型:</strong> ' + fileExtensions.join(', ') + '</p>';
+  h += '<p><strong>🛠️ 生成工具:</strong> 文件清单生成器 V1.1.0</p>';
+  h += '</div>';
+  
+  // 文件列表表格
+  h += '<table>';
+  h += '<tr class="header-row"><td colspan="5">📋 文件清单</td></tr>';
+  h += '<tr><th>#</th><th>📄 文件名</th><th>📝 不包含后缀的文件名</th><th>💾 大小</th><th>📅 修改时间</th></tr>';
+  
+  files.forEach((f, i) => {
+    const fileNameWithoutExt = f.name.replace(/\.[^/.]+$/, "");
+    
+    h += `<tr>
+            <td>${i + 1}</td>
+            <td>${esc(f.name)}</td>
+            <td>${esc(fileNameWithoutExt)}</td>
+            <td>${formatFileSize(f.size)}</td>
+            <td>${new Date(f.lastModified).toLocaleString('zh-CN')}</td>
+          </tr>`;
+  });
+  
+  h += '</table>';
+  
+  // 统计信息表格
+  h += '<table>';
+  h += '<tr class="header-row"><td colspan="2">📊 统计信息</td></tr>';
+  h += '<tr><th>📈 项目</th><th>🔢 数值</th></tr>';
+  h += `<tr><td>文件总数</td><td>${files.length} 个文件</td></tr>`;
+  h += `<tr><td>总大小</td><td>${formatFileSize(totalSize)}</td></tr>`;
+  h += `<tr><td>平均文件大小</td><td>${formatFileSize(totalSize / files.length)}</td></tr>`;
+  h += `<tr><td>文件类型数量</td><td>${fileExtensions.length} 种类型</td></tr>`;
+  h += '</table>';
+  
+  // 页脚
+  h += '<div class="footer">';
+  h += '<p>🛠️ 生成工具：文件清单生成器 | 👨‍💻 作者：技术开发二部 | 🔗 GitHub: https://github.com/caifugao110/FileList_Generator</p>';
+  h += '</div>';
+  
+  return h;
+}
+
+// HTML转义
+function esc(s) {
+  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// 下载Excel文件
+function downloadExcel(html) {
+  const timestamp = new Date().toISOString().replace(/[-:]/g, '').split('.')[0];
+  const blob = new Blob(['\ufeff' + html], {type: 'application/vnd.ms-excel;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `文件清单_${folderName || '文件夹'}_${timestamp}.xls`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+// 显示状态信息
+function showStatus(msg, type) {
+  statusBox.innerHTML = msg;
+  statusBox.className = 'status ' + type;
+  
+  // 使用requestAnimationFrame确保样式变化被浏览器识别
+  requestAnimationFrame(() => {
+    statusBox.classList.add('show');
+  });
+  
+  // 4秒后自动隐藏，但如果是错误信息则保留更长时间
+  const timeout = type === 'error' ? 6000 : 4000;
+  setTimeout(() => {
+    statusBox.classList.remove('show');
+    setTimeout(() => {
+      statusBox.style.display = 'none';
+    }, 500);
+  }, timeout);
+}
+</script>
+</body>
+</html>
