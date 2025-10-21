@@ -1,1159 +1,1303 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="utf-8">
-<title>文件清单生成器</title>
-<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📁</text></svg>">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<style>
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-:root {
-  --primary: #667eea;
-  --primary-dark: #5a6fd8;
-  --secondary: #764ba2;
-  --light: #f8f9ff;
-  --dark: #333;
-  --gray: #6c757d;
-  --success: #28a745;
-  --danger: #dc3545;
-  --warning: #ffc107;
-  --info: #17a2b8;
-  --border-radius: 16px;
-  --box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
-  --transition: all 0.3s ease;
-}
-
-body {
-  font-family: 'Segoe UI', 'Microsoft YaHei', Arial, sans-serif;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  min-height: 100vh;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 20px;
-  color: var(--dark);
-  line-height: 1.6;
-}
-
-.container {
-  background: #fff;
-  border-radius: var(--border-radius);
-  box-shadow: var(--box-shadow);
-  padding: 40px;
-  max-width: 1000px;
-  width: 100%;
-  text-align: center;
-  position: relative;
-  overflow: hidden;
-  animation: fadeIn 0.8s ease-out;
-  backdrop-filter: blur(10px);
-  background: rgba(255, 255, 255, 0.95);
-}
-
-.container::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 6px;
-  background: linear-gradient(45deg, var(--primary), var(--secondary));
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.header {
-  margin-bottom: 30px;
-  position: relative;
-}
-
-.header h1 {
-  font-size: 38px;
-  margin-bottom: 15px;
-  background: linear-gradient(45deg, var(--primary), var(--secondary));
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  font-weight: 800;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 15px;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.header p {
-  color: var(--gray);
-  margin-bottom: 8px;
-  font-size: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-
-.select-area {
-  border: 3px dashed #ddd;
-  border-radius: var(--border-radius);
-  padding: 50px 20px;
-  margin-bottom: 30px;
-  cursor: pointer;
-  transition: var(--transition);
-  position: relative;
-  background: var(--light);
-  backdrop-filter: blur(5px);
-}
-
-.select-area:hover {
-  border-color: var(--primary);
-  background: rgba(102, 126, 234, 0.08);
-  transform: translateY(-5px);
-  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
-}
-
-.select-icon {
-  font-size: 70px;
-  color: #ddd;
-  margin-bottom: 20px;
-  transition: var(--transition);
-  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
-}
-
-.select-area:hover .select-icon {
-  color: var(--primary);
-  transform: scale(1.15);
-}
-
-.select-text {
-  font-size: 22px;
-  font-weight: 700;
-  color: #555;
-  margin-bottom: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-}
-
-.select-hint {
-  color: #888;
-  font-size: 15px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-}
-
-#fileInput {
-  display: none;
-}
-
-.stats-container {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 20px;
-  gap: 15px;
-}
-
-.stat-card {
-  flex: 1;
-  background: var(--light);
-  padding: 20px;
-  border-radius: var(--border-radius);
-  text-align: center;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
-  transition: var(--transition);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  position: relative;
-  overflow: hidden;
-}
-
-.stat-card::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: linear-gradient(45deg, var(--primary), var(--secondary));
-}
-
-.stat-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 12px 25px rgba(0, 0, 0, 0.12);
-}
-
-.stat-icon {
-  font-size: 28px;
-  margin-bottom: 12px;
-  color: var(--primary);
-  background: rgba(102, 126, 234, 0.1);
-  width: 60px;
-  height: 60px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-}
-
-.stat-value {
-  font-size: 26px;
-  font-weight: 800;
-  color: var(--primary);
-  margin-bottom: 5px;
-}
-
-.stat-label {
-  font-size: 15px;
-  color: var(--gray);
-  font-weight: 600;
-}
-
-.file-filter {
-  background: var(--light);
-  padding: 25px;
-  border-radius: var(--border-radius);
-  margin-bottom: 20px;
-  text-align: left;
-  display: none;
-  animation: slideDown 0.5s ease-out;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
-  backdrop-filter: blur(5px);
-}
-
-.file-filter.show {
-  display: block;
-}
-
-.filter-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.filter-title {
-  font-weight: 700;
-  color: var(--dark);
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-size: 18px;
-}
-
-.filter-actions {
-  display: flex;
-  gap: 12px;
-}
-
-.filter-actions button {
-  padding: 8px 16px;
-  border: 2px solid var(--primary);
-  background: transparent;
-  color: var(--primary);
-  border-radius: 8px;
-  cursor: pointer;
-  transition: var(--transition);
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.filter-actions button:hover {
-  background: var(--primary);
-  color: white;
-  transform: translateY(-2px);
-}
-
-.filter-list {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 12px;
-  max-height: 200px;
-  overflow-y: auto;
-  padding: 15px;
-  border: 1px solid #eee;
-  border-radius: 12px;
-  background: white;
-  box-shadow: inset 0 2px 5px rgba(0,0,0,0.05);
-}
-
-.filter-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px;
-  border-radius: 8px;
-  transition: var(--transition);
-}
-
-.filter-item:hover {
-  background: rgba(102, 126, 234, 0.05);
-}
-
-.filter-item input {
-  margin: 0;
-  transform: scale(1.2);
-}
-
-.file-list {
-  max-height: 400px;
-  overflow-y: auto;
-  border: 1px solid #eee;
-  border-radius: var(--border-radius);
-  padding: 25px;
-  margin-bottom: 20px;
-  background: var(--light);
-  display: none;
-  text-align: left;
-  transition: var(--transition);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
-  backdrop-filter: blur(5px);
-}
-
-.file-list.show {
-  display: block;
-  animation: slideDown 0.5s ease-out;
-}
-
-@keyframes slideDown {
-  from { opacity: 0; max-height: 0; }
-  to { opacity: 1; max-height: 400px; }
-}
-
-.file-list h3 {
-  margin-bottom: 20px;
-  color: var(--dark);
-  text-align: center;
-  border-bottom: 2px solid #eee;
-  padding-bottom: 15px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  font-size: 20px;
-}
-
-.file-item {
-  padding: 15px 20px;
-  margin-bottom: 10px;
-  background: #fff;
-  border-left: 5px solid var(--primary);
-  border-radius: 10px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
-  transition: var(--transition);
-  position: relative;
-  overflow: hidden;
-}
-
-.file-item::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
-  transform: translateX(-100%);
-}
-
-.file-item:hover {
-  transform: translateX(8px);
-  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
-  border-left-color: var(--secondary);
-}
-
-.file-item:hover::before {
-  transform: translateX(100%);
-  transition: transform 0.6s;
-}
-
-.file-name {
-  flex: 1;
-  font-size: 15px;
-  color: var(--dark);
-  font-weight: 500;
-}
-
-.file-size {
-  color: var(--gray);
-  font-size: 14px;
-  margin-left: 15px;
-  font-weight: 600;
-  background: rgba(108, 117, 125, 0.1);
-  padding: 4px 10px;
-  border-radius: 20px;
-}
-
-.btn-generate {
-  background: linear-gradient(45deg, var(--primary), var(--secondary));
-  color: #fff;
-  border: none;
-  padding: 18px 45px;
-  border-radius: 30px;
-  font-size: 18px;
-  cursor: pointer;
-  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
-  display: none;
-  transition: var(--transition);
-  font-weight: 700;
-  margin-top: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  position: relative;
-  overflow: hidden;
-}
-
-.btn-generate::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: -100%;
-  width: 100%;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-  transition: left 0.5s;
-}
-
-.btn-generate:hover, .btn-generate:focus {
-  transform: translateY(-5px);
-  box-shadow: 0 12px 25px rgba(102, 126, 234, 0.5);
-  background: linear-gradient(45deg, var(--primary-dark), var(--secondary));
-}
-
-.btn-generate:hover::before {
-  left: 100%;
-}
-
-.btn-generate:active {
-  transform: translateY(-2px);
-}
-
-.status {
-  margin-top: 20px;
-  padding: 18px;
-  border-radius: var(--border-radius);
-  font-size: 15px;
-  display: none;
-  animation: fadeIn 0.5s ease-out;
-  opacity: 0;
-  transform: translateY(10px);
-  transition: opacity 0.5s, transform 0.5s;
-  backdrop-filter: blur(5px);
-  font-weight: 500;
-}
-
-.status.show {
-  display: block;
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.status.success {
-  background: #d4edda;
-  color: #155724;
-  border: 2px solid #c3e6cb;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  box-shadow: 0 4px 10px rgba(40, 167, 69, 0.2);
-}
-
-.status.error {
-  background: #f8d7da;
-  color: #721c24;
-  border: 2px solid #f5c6cb;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  box-shadow: 0 4px 10px rgba(220, 53, 69, 0.2);
-}
-
-.status.info {
-  background: #d1ecf1;
-  color: #0c5460;
-  border: 2px solid #bee5eb;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  box-shadow: 0 4px 10px rgba(23, 162, 184, 0.2);
-}
-
-.folder-info {
-  margin-top: 15px;
-  padding: 18px;
-  background: #e9ecef;
-  border-radius: var(--border-radius);
-  font-size: 15px;
-  color: #495057;
-  display: none;
-  text-align: left;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  font-weight: 500;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.05);
-}
-
-.folder-info.show {
-  display: flex;
-  animation: fadeIn 0.5s ease-out;
-}
-
-.progress-bar {
-  width: 100%;
-  height: 10px;
-  background-color: #e9ecef;
-  border-radius: 5px;
-  margin: 20px 0;
-  overflow: hidden;
-  display: none;
-  box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.progress {
-  height: 100%;
-  background: linear-gradient(45deg, var(--primary), var(--secondary));
-  width: 0%;
-  transition: width 0.5s ease;
-  border-radius: 5px;
-}
-
-.file-type {
-  display: inline-block;
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 12px;
-  margin-left: 10px;
-  background: #e9ecef;
-  color: #495057;
-  font-weight: 600;
-}
-
-/* 键盘导航焦点样式 */
-.select-area:focus, .btn-generate:focus {
-  outline: 3px solid var(--primary);
-  outline-offset: 3px;
-}
-
-/* 滚动条样式 */
-.file-list::-webkit-scrollbar,
-.filter-list::-webkit-scrollbar {
-  width: 10px;
-}
-
-.file-list::-webkit-scrollbar-track,
-.filter-list::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 10px;
-}
-
-.file-list::-webkit-scrollbar-thumb,
-.filter-list::-webkit-scrollbar-thumb {
-  background: var(--primary);
-  border-radius: 10px;
-}
-
-.file-list::-webkit-scrollbar-thumb:hover,
-.filter-list::-webkit-scrollbar-thumb:hover {
-  background: var(--primary-dark);
-}
-
-/* 页脚样式 */
-.footer {
-  margin-top: 40px;
-  padding-top: 25px;
-  border-top: 2px solid #eee;
-  font-size: 15px;
-  color: var(--gray);
-  text-align: center;
-}
-
-.footer-content {
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-}
-
-.footer-info {
-  display: flex;
-  justify-content: center;
-  gap: 25px;
-  flex-wrap: wrap;
-}
-
-.footer-info div {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 15px;
-  background: rgba(108, 117, 125, 0.08);
-  border-radius: 20px;
-  transition: var(--transition);
-}
-
-.footer-info div:hover {
-  background: rgba(108, 117, 125, 0.15);
-  transform: translateY(-2px);
-}
-
-.footer a {
-  color: var(--primary);
-  text-decoration: none;
-  transition: var(--transition);
-  font-weight: 600;
-}
-
-.footer a:hover {
-  color: var(--secondary);
-  text-decoration: underline;
-}
-
-/* 响应式设计 */
-@media (max-width: 768px) {
-  .container {
-    padding: 25px;
-  }
-  
-  .header h1 {
-    font-size: 30px;
-  }
-  
-  .stats-container {
-    flex-direction: column;
-  }
-  
-  .select-area {
-    padding: 35px 15px;
-  }
-  
-  .filter-list {
-    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-  }
-  
-  .footer-info {
-    flex-direction: column;
-    gap: 12px;
-  }
-  
-  .btn-generate {
-    padding: 16px 35px;
-    font-size: 16px;
-  }
-}
-
-/* 粒子背景效果 */
-.particles {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  z-index: -1;
-  pointer-events: none;
-}
-
-.particle {
-  position: absolute;
-  background: rgba(255, 255, 255, 0.3);
-  border-radius: 50%;
-  animation: float 15s infinite linear;
-}
-
-@keyframes float {
-  0% {
-    transform: translateY(0) rotate(0deg);
-    opacity: 0;
-  }
-  10% {
-    opacity: 1;
-  }
-  90% {
-    opacity: 1;
-  }
-  100% {
-    transform: translateY(-1000px) rotate(720deg);
-    opacity: 0;
-  }
-}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文件清单生成器</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📁</text></svg>">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* 所有样式保持不变 */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        :root {
+            --primary: #667eea;
+            --primary-dark: #5a6fd8;
+            --secondary: #764ba2;
+            --light: #f8f9ff;
+            --dark: #333;
+            --gray: #6c757d;
+            --success: #28a745;
+            --danger: #dc3545;
+            --warning: #ffc107;
+            --info: #17a2b8;
+            --border-radius: 16px;
+            --box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            color: var(--dark);
+            line-height: 1.6;
+        }
+        .container {
+            background: #fff;
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 40px;
+            max-width: 1000px;
+            width: 100%;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+            animation: fadeIn 0.8s ease-out;
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.95);
+        }
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 6px;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .header {
+            margin-bottom: 30px;
+            position: relative;
+        }
+        .header h1 {
+            font-size: 38px;
+            margin-bottom: 15px;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .header p {
+            color: var(--gray);
+            margin-bottom: 8px;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        .select-area {
+            border: 3px dashed #ddd;
+            border-radius: var(--border-radius);
+            padding: 50px 20px;
+            margin-bottom: 30px;
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+            background: var(--light);
+            backdrop-filter: blur(5px);
+            pointer-events: auto;
+        }
+        .select-area:hover {
+            border-color: var(--primary);
+            background: rgba(102, 126, 234, 0.08);
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
+        }
+        .select-icon {
+            font-size: 70px;
+            color: #ddd;
+            margin-bottom: 20px;
+            transition: var(--transition);
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1));
+        }
+        .select-area:hover .select-icon {
+            color: var(--primary);
+            transform: scale(1.15);
+        }
+        .select-text {
+            font-size: 22px;
+            font-weight: 700;
+            color: #555;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .select-hint {
+            color: #888;
+            font-size: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+        #fileInput {
+            display: none;
+        }
+        .stats-container {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            gap: 15px;
+        }
+        .stat-card {
+            flex: 1;
+            background: var(--light);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            text-align: center;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+        }
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 25px rgba(0, 0, 0, 0.12);
+        }
+        .stat-icon {
+            font-size: 28px;
+            margin-bottom: 12px;
+            color: var(--primary);
+            background: rgba(102, 126, 234, 0.1);
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+        .stat-value {
+            font-size: 26px;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 5px;
+        }
+        .stat-label {
+            font-size: 15px;
+            color: var(--gray);
+            font-weight: 600;
+        }
+        .file-filter {
+            background: var(--light);
+            padding: 25px;
+            border-radius: var(--border-radius);
+            margin-bottom: 20px;
+            text-align: left;
+            display: none;
+            animation: slideDown 0.5s ease-out;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+            backdrop-filter: blur(5px);
+        }
+        .file-filter.show {
+            display: block;
+        }
+        .filter-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .filter-title {
+            font-weight: 700;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-size: 18px;
+        }
+        .filter-actions {
+            display: flex;
+            gap: 12px;
+        }
+        .filter-actions button {
+            padding: 8px 16px;
+            border: 2px solid var(--primary);
+            background: transparent;
+            color: var(--primary);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: var(--transition);
+            font-size: 14px;
+            font-weight: 600;
+            pointer-events: auto;
+        }
+        .filter-actions button:hover {
+            background: var(--primary);
+            color: white;
+            transform: translateY(-2px);
+        }
+        .filter-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+            padding: 15px;
+            border: 1px solid #eee;
+            border-radius: 12px;
+            background: white;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .filter-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px;
+            border-radius: 8px;
+            transition: var(--transition);
+        }
+        .filter-item:hover {
+            background: rgba(102, 126, 234, 0.05);
+        }
+        .filter-item input {
+            margin: 0;
+            transform: scale(1.2);
+        }
+        .file-list {
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #eee;
+            border-radius: var(--border-radius);
+            padding: 25px;
+            margin-bottom: 20px;
+            background: var(--light);
+            display: none;
+            text-align: left;
+            transition: var(--transition);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.06);
+            backdrop-filter: blur(5px);
+        }
+        .file-list.show {
+            display: block;
+            animation: slideDown 0.5s ease-out;
+        }
+        @keyframes slideDown {
+            from { opacity: 0; max-height: 0; }
+            to { opacity: 1; max-height: 400px; }
+        }
+        .file-list h3 {
+            margin-bottom: 20px;
+            color: var(--dark);
+            text-align: center;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 15px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            font-size: 20px;
+        }
+        .file-item {
+            padding: 15px 20px;
+            margin-bottom: 10px;
+            background: #fff;
+            border-left: 5px solid var(--primary);
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+        .file-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
+            transform: translateX(-100%);
+        }
+        .file-item:hover {
+            transform: translateX(8px);
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+            border-left-color: var(--secondary);
+        }
+        .file-item:hover::before {
+            transform: translateX(100%);
+            transition: transform 0.6s;
+        }
+        .file-name {
+            flex: 1;
+            font-size: 15px;
+            color: var(--dark);
+            font-weight: 500;
+        }
+        .file-size {
+            color: var(--gray);
+            font-size: 14px;
+            margin-left: 15px;
+            font-weight: 600;
+            background: rgba(108, 117, 125, 0.1);
+            padding: 4px 10px;
+            border-radius: 20px;
+        }
+        .btn-generate {
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            color: #fff;
+            border: none;
+            padding: 18px 45px;
+            border-radius: 30px;
+            font-size: 18px;
+            cursor: pointer;
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+            transition: var(--transition);
+            font-weight: 700;
+            margin: 20px auto 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            position: relative;
+            overflow: hidden;
+            width: fit-content;
+            pointer-events: auto;
+        }
+        .btn-generate::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s;
+        }
+        .btn-generate:hover, .btn-generate:focus {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 25px rgba(102, 126, 234, 0.5);
+            background: linear-gradient(45deg, var(--primary-dark), var(--secondary));
+        }
+        .btn-generate:hover::before {
+            left: 100%;
+        }
+        .btn-generate:active {
+            transform: translateY(-2px);
+        }
+        .status {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #333;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 25px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.4s ease-out, visibility 0.4s ease-out, transform 0.4s ease-out;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 15px;
+        }
+        .status.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(-10px);
+        }
+        .status.info {
+            background-color: #17a2b8;
+        }
+        .status.success {
+            background-color: #28a745;
+        }
+        .status.warning {
+            background-color: #ffc107;
+            color: #333;
+        }
+        .status.error {
+            background-color: #dc3545;
+        }
+        .folder-info {
+            margin-top: 15px;
+            padding: 18px;
+            background: #e9ecef;
+            border-radius: var(--border-radius);
+            font-size: 15px;
+            color: #495057;
+            display: none;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 500;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+        .folder-info.show {
+            display: flex;
+            animation: fadeIn 0.5s ease-out;
+        }
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background-color: #e9ecef;
+            border-radius: 5px;
+            margin: 20px 0;
+            overflow: hidden;
+            display: none;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .progress {
+            height: 100%;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            width: 0%;
+            transition: width 0.5s ease;
+            border-radius: 5px;
+        }
+        .file-type {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            margin-left: 10px;
+            background: #e9ecef;
+            color: #495057;
+            font-weight: 600;
+        }
+        .select-area.drag-over {
+            border-color: var(--secondary);
+            background: rgba(118, 75, 162, 0.1);
+            transform: scale(1.02);
+            box-shadow: 0 0 25px rgba(118, 75, 162, 0.2);
+        }
+        .select-area.drag-over .select-icon {
+            color: var(--secondary);
+            transform: scale(1.2);
+        }
+        .footer {
+            margin-top: 40px;
+            padding-top: 25px;
+            border-top: 2px solid #eee;
+            font-size: 15px;
+            color: var(--gray);
+            text-align: center;
+        }
+        .footer-content {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .footer-info {
+            display: flex;
+            justify-content: center;
+            gap: 25px;
+            flex-wrap: wrap;
+        }
+        .footer-info div {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 15px;
+            background: rgba(108, 117, 125, 0.08);
+            border-radius: 20px;
+            transition: var(--transition);
+        }
+        .footer-info div:hover {
+            background: rgba(108, 117, 125, 0.15);
+            transform: translateY(-2px);
+        }
+        .footer a {
+            color: var(--primary);
+            text-decoration: none;
+            transition: var(--transition);
+            font-weight: 600;
+        }
+        .footer a:hover {
+            color: var(--secondary);
+            text-decoration: underline;
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 25px;
+            }
+            .header h1 {
+                font-size: 30px;
+            }
+            .stats-container {
+                flex-direction: column;
+            }
+            .select-area {
+                padding: 35px 15px;
+            }
+            .filter-list {
+                grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            }
+            .footer-info {
+                flex-direction: column;
+                gap: 12px;
+            }
+            .btn-generate {
+                padding: 16px 35px;
+                font-size: 16px;
+            }
+        }
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+        }
+        .particle {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            animation: float 15s infinite linear;
+        }
+        @keyframes float {
+            0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-1000px) rotate(720deg); opacity: 0; }
+        }
+        .browser-warning {
+            background: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeaa7;
+            border-radius: var(--border-radius);
+            padding: 15px;
+            margin-bottom: 20px;
+            text-align: left;
+            display: none;
+        }
+        .browser-warning.show {
+            display: block;
+        }
+        .browser-warning h4 {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .browser-warning ul {
+            margin-left: 20px;
+            margin-bottom: 10px;
+        }
+        .browser-warning li {
+            margin-bottom: 5px;
+        }
+    </style>
 </head>
 <body>
-<!-- 粒子背景 -->
-<div class="particles" id="particles"></div>
-
-<div class="container">
-  <div class="header">
-    <h1><i class="fas fa-folder-open"></i>文件清单生成器</h1>
-    <p><i class="fas fa-info-circle"></i>点击下方区域选择文件夹</p>
-    <p><i class="fas fa-filter"></i>仅显示根目录文件，支持按文件类型筛选</p>
-  </div>
-
-  <div class="select-area" id="selectArea" tabindex="0">
-    <div class="select-icon">📂</div>
-    <div class="select-text"><i class="fas fa-mouse-pointer"></i>点击选择文件夹</div>
-    <div class="select-hint"><i class="fas fa-exclamation-circle"></i>仅会列出选中目录根层文件，不含子文件夹</div>
-  </div>
-  <input type="file" id="fileInput" webkitdirectory directory multiple>
-
-  <div class="stats-container" id="statsContainer" style="display: none;">
-    <div class="stat-card">
-      <div class="stat-icon"><i class="fas fa-file"></i></div>
-      <div class="stat-value" id="fileCount">0</div>
-      <div class="stat-label">文件数量</div>
+    <div class="particles" id="particles"></div>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-folder-open"></i>文件清单生成器</h1>
+            <p><i class="fas fa-info-circle"></i>点击下方区域选择文件夹</p>
+            <p><i class="fas fa-filter"></i>仅显示根目录文件，支持按文件类型筛选</p>
+        </div>
+        <div class="browser-warning" id="browserWarning">
+            <h4><i class="fas fa-exclamation-triangle"></i>浏览器兼容性提示</h4>
+            <p>为了确保文件夹选择功能正常工作，请确保：</p>
+            <ul>
+                <li>使用现代浏览器（Chrome、Edge、Firefox等）</li>
+                <li>在Chrome/Edge中，确保启用了文件夹上传功能</li>
+                <li>如果仍然无法选择文件夹，请尝试使用文件选择功能</li>
+            </ul>
+            <p>如果文件夹选择功能不可用，您也可以使用下面的文件选择按钮：</p>
+            <button id="fallbackFileSelect" class="btn-generate" style="display: inline-flex; margin-top: 10px;">
+                <i class="fas fa-file"></i>选择文件
+            </button>
+        </div>
+        <div class="select-area" id="selectArea" tabindex="0" role="button" aria-label="点击或拖拽选择文件夹">
+            <div class="select-icon">📂</div>
+            <div class="select-text"><i class="fas fa-mouse-pointer"></i>点击选择文件夹或拖拽文件/文件夹到此</div>
+            <div class="select-hint"><i class="fas fa-exclamation-circle"></i>仅会列出选中目录根层文件，不含子文件夹</div>
+        </div>
+        <input type="file" id="fileInput" webkitdirectory directory multiple>
+        <input type="file" id="fallbackFileInput" multiple style="display: none;">
+        <div class="stats-container" id="statsContainer" style="display: none;">
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-file"></i></div>
+                <div class="stat-value" id="fileCount">0</div>
+                <div class="stat-label">文件数量</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-weight-hanging"></i></div>
+                <div class="stat-value" id="totalSize">0 B</div>
+                <div class="stat-label">总大小</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon"><i class="fas fa-folder"></i></div>
+                <div class="stat-value" id="folderName">-</div>
+                <div class="stat-label">文件夹名称</div>
+            </div>
+        </div>
+        <div class="file-filter" id="fileFilter">
+            <div class="filter-header">
+                <div class="filter-title">
+                    <i class="fas fa-filter"></i>
+                    <span>文件类型筛选 (选择要导出的文件类型)</span>
+                </div>
+                <div class="filter-actions">
+                    <button id="selectAllTypes">全选</button>
+                    <button id="deselectAllTypes">取消全选</button>
+                </div>
+            </div>
+            <div class="filter-list" id="filterList"></div>
+        </div>
+        <div class="file-list" id="fileList">
+            <h3><i class="fas fa-list"></i>文件清单预览</h3>
+            <div id="fileItems"></div>
+        </div>
+        
+        <div style="display: flex; justify-content: center; width: 100%;">
+            <button class="btn-generate" id="btnGenerate" tabindex="0">
+                <i class="fas fa-rocket"></i>生成Excel文件
+            </button>
+        </div>
+        
+        <div class="status" id="status"></div>
+        
+        <div class="footer">
+            <div class="footer-content">
+                <div class="footer-info">
+                    <div><i class="fas fa-user"></i> 作者：技术开发二部</div>
+                    <div><i class="fas fa-code-branch"></i> 版本：V1.1.0</div>
+                    <div><i class="fas fa-calendar"></i> 更新日期：2025年10月</div>
+                </div>
+                <div class="footer-info">
+                    <div><i class="fab fa-github"></i> GitHub：<a href="https://github.com/caifugao110/FileList_Generator" target="_blank">https://github.com/caifugao110/FileList_Generator</a></div>
+                </div>
+                <div class="footer-info">
+                    <div><i class="fas fa-info-circle"></i> 功能说明：本工具用于快速生成文件夹内文件的详细清单，支持文件类型筛选，生成符合要求的的Excel文件。</div>
+                </div>
+            </div>
+        </div>
     </div>
-    <div class="stat-card">
-      <div class="stat-icon"><i class="fas fa-weight-hanging"></i></div>
-      <div class="stat-value" id="totalSize">0 B</div>
-      <div class="stat-label">总大小</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-icon"><i class="fas fa-folder"></i></div>
-      <div class="stat-value" id="folderName">-</div>
-      <div class="stat-label">文件夹名称</div>
-    </div>
-  </div>
+    <script>
+        // 修复核心：确保所有函数和变量在全局作用域可访问，避免因作用域问题导致函数未定义
+        window.selectedFiles = [];
+        window.folderName = "";
+        window.fileTypes = new Set();
+        window.selectedFileTypes = new Set();
+        window.isDragging = false;
 
-  <div class="file-filter" id="fileFilter">
-    <div class="filter-header">
-      <div class="filter-title">
-        <i class="fas fa-filter"></i>
-        <span>文件类型筛选 (选择要导出的文件类型)</span>
-      </div>
-      <div class="filter-actions">
-        <button id="selectAllTypes">全选</button>
-        <button id="deselectAllTypes">取消全选</button>
-      </div>
-    </div>
-    <div class="filter-list" id="filterList"></div>
-  </div>
+        // 创建粒子背景（独立函数，避免阻塞）
+        function createParticles() {
+            try {
+                const particlesContainer = document.getElementById('particles');
+                if (!particlesContainer) return;
+                
+                const particleCount = 30;
+                for (let i = 0; i < particleCount; i++) {
+                    const particle = document.createElement('div');
+                    particle.classList.add('particle');
+                    
+                    const size = Math.random() * 20 + 5;
+                    const left = Math.random() * 100;
+                    const animationDuration = Math.random() * 20 + 10;
+                    const animationDelay = Math.random() * 5;
+                    
+                    particle.style.width = `${size}px`;
+                    particle.style.height = `${size}px`;
+                    particle.style.left = `${left}%`;
+                    particle.style.animationDuration = `${animationDuration}s`;
+                    particle.style.animationDelay = `${animationDelay}s`;
+                    
+                    particlesContainer.appendChild(particle);
+                }
+            } catch (e) {
+                console.error('粒子背景创建失败:', e);
+            }
+        }
 
-  <div class="file-list" id="fileList">
-    <h3><i class="fas fa-list"></i>文件清单预览</h3>
-    <div id="fileItems"></div>
-  </div>
-  
-  <button class="btn-generate" id="btnGenerate" tabindex="0">
-    <i class="fas fa-file-excel"></i>生成Excel文件
-  </button>
-  
-  <div class="status" id="status"></div>
-  
-  <div class="footer">
-    <div class="footer-content">
-      <div class="footer-info">
-        <div><i class="fas fa-user"></i> 作者：技术开发二部</div>
-        <div><i class="fas fa-code-branch"></i> 版本：V1.1.0</div>
-        <div><i class="fas fa-calendar"></i> 更新日期：2025年10月</div>
-      </div>
-      <div class="footer-info">
-        <div><i class="fab fa-github"></i> GitHub：<a href="https://github.com/caifugao110/FileList_Generator" target="_blank">https://github.com/caifugao110/FileList_Generator</a></div>
-      </div>
-      <div class="footer-info">
-        <div><i class="fas fa-info-circle"></i> 功能说明：本工具用于快速生成文件夹内文件的详细清单，支持文件类型筛选，生成符合要求的的Excel文件。</div>
-      </div>
-    </div>
-  </div>
-</div>
+        // 触发文件选择（核心函数，确保无错误）
+        window.triggerFileInput = function() {
+            try {
+                const fileInput = document.getElementById('fileInput');
+                if (!fileInput) {
+                    console.error('未找到fileInput元素');
+                    showStatus('内部错误：文件选择组件未加载', 'error');
+                    return;
+                }
 
-<script>
-// 创建粒子背景
-function createParticles() {
-  const particlesContainer = document.getElementById('particles');
-  const particleCount = 30;
-  
-  for (let i = 0; i < particleCount; i++) {
-    const particle = document.createElement('div');
-    particle.classList.add('particle');
-    
-    const size = Math.random() * 20 + 5;
-    const left = Math.random() * 100;
-    const animationDuration = Math.random() * 20 + 10;
-    const animationDelay = Math.random() * 5;
-    
-    particle.style.width = `${size}px`;
-    particle.style.height = `${size}px`;
-    particle.style.left = `${left}%`;
-    particle.style.animationDuration = `${animationDuration}s`;
-    particle.style.animationDelay = `${animationDelay}s`;
-    
-    particlesContainer.appendChild(particle);
-  }
-}
+                if (fileInput.webkitdirectory !== undefined) {
+                    fileInput.click();
+                } else {
+                    showStatus('您的浏览器不支持文件夹选择，请使用文件拖拽或备用按钮', 'warning');
+                    document.getElementById('fallbackFileInput').click();
+                }
 
-// 获取DOM元素
-const selectArea = document.getElementById('selectArea');
-const fileInput = document.getElementById('fileInput');
-const fileList = document.getElementById('fileList');
-const fileItems = document.getElementById('fileItems');
-const btnGenerate = document.getElementById('btnGenerate');
-const statusBox = document.getElementById('status');
-const statsContainer = document.getElementById('statsContainer');
-const fileCountElement = document.getElementById('fileCount');
-const totalSizeElement = document.getElementById('totalSize');
-const folderNameElement = document.getElementById('folderName');
-const fileFilter = document.getElementById('fileFilter');
-const filterList = document.getElementById('filterList');
-const selectAllTypes = document.getElementById('selectAllTypes');
-const deselectAllTypes = document.getElementById('deselectAllTypes');
+                // 2秒后检查是否选择成功（容错）
+                setTimeout(() => {
+                    if (window.selectedFiles.length === 0) {
+                        showStatus('文件夹选择无响应？试试拖拽文件夹到区域', 'warning');
+                    }
+                }, 2000);
+            } catch (e) {
+                console.error('触发文件选择失败:', e);
+                showStatus('文件选择失败，请重试', 'error');
+            }
+        }
 
-// 全局变量
-let selectedFiles = [];
-let folderName = '';
-let fileTypes = new Set();
-let selectedFileTypes = new Set();
+        // 处理文件（核心函数，添加错误捕获）
+        window.processFiles = function(files, isFallback, customFolderName = '') {
+            try {
+                if (!files || !files.length) {
+                    showStatus('未检测到文件', 'warning');
+                    return;
+                }
 
-// 页面加载完成后的初始化
-document.addEventListener('DOMContentLoaded', function() {
-  createParticles();
-  showStatus('欢迎使用文件清单生成器！请点击选择文件夹按钮选择文件夹。', 'info');
-  
-  // 设置键盘导航
-  selectArea.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter' || e.key === ' ') {
-      e.preventDefault();
-      fileInput.click();
-    }
-  });
-  
-  btnGenerate.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      generateExcel();
-    }
-  });
-  
-  // 文件类型筛选事件
-  selectAllTypes.addEventListener('click', function() {
-    document.querySelectorAll('.file-type-checkbox').forEach(checkbox => {
-      checkbox.checked = true;
-      selectedFileTypes.add(checkbox.value);
-    });
-    updateFileList();
-  });
-  
-  deselectAllTypes.addEventListener('click', function() {
-    document.querySelectorAll('.file-type-checkbox').forEach(checkbox => {
-      checkbox.checked = false;
-      selectedFileTypes.delete(checkbox.value);
-    });
-    updateFileList();
-  });
-});
+                // 过滤无效文件
+                window.selectedFiles = files.filter(f => {
+                    const fileName = f.name.toLowerCase();
+                    return !fileName.endsWith(".db") && !f.name.startsWith(".") && f.size > 0;
+                });
 
-// 点击选择文件夹
-selectArea.addEventListener('click', () => fileInput.click());
+                if (!isFallback) {
+                    // 根目录文件过滤（修复逻辑）
+                    window.selectedFiles = window.selectedFiles.filter(f => {
+                        const path = f.webkitRelativePath || "";
+                        return path.split("/").length <= 2; // 允许根目录和一级文件
+                    });
+                }
 
-// 文件选择事件
-fileInput.addEventListener('change', e => {
-  processFiles(Array.from(e.target.files));
-});
+                // 排序
+                window.selectedFiles.sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'));
 
-// 处理文件
-function processFiles(files) {
-  // 过滤掉.db文件和隐藏文件
-  selectedFiles = files.filter(f => {
-    const fileName = f.name.toLowerCase();
-    return !fileName.endsWith('.db') && !f.name.startsWith('.');
-  });
-  
-  // 只保留根目录文件（webkitRelativePath 不含 "/" 或为空）
-  selectedFiles = selectedFiles.filter(f => {
-    const path = f.webkitRelativePath || '';
-    return path.split('/').length === 2; // 文件夹名/文件名
-  });
-  
-  selectedFiles.sort((a, b) => a.name.localeCompare(b.name, 'zh-CN'));
-  
-  if (selectedFiles.length === 0) {
-    showStatus('未选中任何文件', 'error');
-    return;
-  }
-  
-  // 获取文件夹名
-  if (selectedFiles.length > 0 && selectedFiles[0].webkitRelativePath) {
-    folderName = selectedFiles[0].webkitRelativePath.split('/')[0];
-  }
-  
-  // 提取文件类型
-  extractFileTypes();
-  
-  displayList();
-  updateStats();
-  btnGenerate.style.display = 'flex';
-  showStatus(`已成功加载 ${selectedFiles.length} 个文件，包含 ${fileTypes.size} 种文件类型`, 'success');
-  
-  // 平滑滚动到文件列表
-  setTimeout(() => {
-    fileList.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }, 300);
-}
+                if (window.selectedFiles.length === 0) {
+                    showStatus('未找到有效文件（已过滤系统文件和空文件）', 'error');
+                    return;
+                }
 
-// 提取文件类型
-function extractFileTypes() {
-  fileTypes.clear();
-  selectedFileTypes.clear();
-  
-  selectedFiles.forEach(file => {
-    const fileName = file.name;
-    const dotIndex = fileName.lastIndexOf('.');
-    const fileType = dotIndex !== -1 ? fileName.substring(dotIndex + 1).toUpperCase() : '无扩展名';
-    fileTypes.add(fileType);
-    selectedFileTypes.add(fileType);
-  });
-  
-  // 更新文件类型筛选器
-  updateFileTypeFilter();
-}
+                // 设置文件夹名称
+                window.folderName = customFolderName || 
+                                  (selectedFiles[0].webkitRelativePath ? selectedFiles[0].webkitRelativePath.split("/")[0] : "选中的文件");
 
-// 更新文件类型筛选器
-function updateFileTypeFilter() {
-  filterList.innerHTML = '';
-  
-  fileTypes.forEach(fileType => {
-    const filterItem = document.createElement('div');
-    filterItem.className = 'filter-item';
-    
-    const checkbox = document.createElement('input');
-    checkbox.type = 'checkbox';
-    checkbox.id = `type-${fileType}`;
-    checkbox.className = 'file-type-checkbox';
-    checkbox.value = fileType;
-    checkbox.checked = true;
-    
-    checkbox.addEventListener('change', function() {
-      if (this.checked) {
-        selectedFileTypes.add(fileType);
-      } else {
-        selectedFileTypes.delete(fileType);
-      }
-      updateFileList();
-    });
-    
-    const label = document.createElement('label');
-    label.htmlFor = `type-${fileType}`;
-    label.textContent = fileType;
-    
-    filterItem.appendChild(checkbox);
-    filterItem.appendChild(label);
-    filterList.appendChild(filterItem);
-  });
-  
-  fileFilter.classList.add('show');
-}
+                // 提取文件类型并更新界面
+                extractFileTypes();
+                displayList();
+                updateStats();
+                document.getElementById('btnGenerate').style.display = 'flex';
+                showStatus(`已加载 ${window.selectedFiles.length} 个文件，包含 ${window.fileTypes.size} 种类型`, 'success');
 
-// 更新文件列表显示
-function updateFileList() {
-  fileItems.innerHTML = '';
-  
-  const filteredFiles = selectedFiles.filter(file => {
-    const fileName = file.name;
-    const dotIndex = fileName.lastIndexOf('.');
-    const fileType = dotIndex !== -1 ? fileName.substring(dotIndex + 1).toUpperCase() : '无扩展名';
-    return selectedFileTypes.has(fileType);
-  });
-  
-  filteredFiles.forEach((f, i) => {
-    const div = document.createElement('div');
-    div.className = 'file-item';
-    
-    const nameSpan = document.createElement('span');
-    nameSpan.className = 'file-name';
-    nameSpan.textContent = `${i + 1}. ${f.name}`;
-    
-    const sizeSpan = document.createElement('span');
-    sizeSpan.className = 'file-size';
-    sizeSpan.textContent = formatFileSize(f.size);
-    
-    div.appendChild(nameSpan);
-    div.appendChild(sizeSpan);
-    fileItems.appendChild(div);
-  });
-  
-  fileCountElement.textContent = filteredFiles.length;
-  
-  if (filteredFiles.length === 0) {
-    fileItems.innerHTML = '<div style="text-align: center; padding: 20px; color: #6c757d;">没有符合筛选条件的文件</div>';
-  }
-  
-  fileList.classList.add('show');
-}
+                // 滚动到文件列表
+                setTimeout(() => {
+                    document.getElementById('fileList').scrollIntoView({ behavior: 'smooth' });
+                }, 300);
+            } catch (e) {
+                console.error('处理文件失败:', e);
+                showStatus('处理文件时出错，请重试', 'error');
+            }
+        }
 
-// 更新统计信息
-function updateStats() {
-  const fileCount = selectedFiles.length;
-  const totalSize = selectedFiles.reduce((sum, file) => sum + file.size, 0);
-  
-  fileCountElement.textContent = fileCount;
-  totalSizeElement.textContent = formatFileSize(totalSize);
-  folderNameElement.textContent = folderName || '未知文件夹';
-  
-  statsContainer.style.display = 'flex';
-}
+        // 提取文件类型
+        function extractFileTypes() {
+            window.fileTypes.clear();
+            window.selectedFileTypes.clear();
+            
+            window.selectedFiles.forEach(file => {
+                const dotIndex = file.name.lastIndexOf('.');
+                const fileType = dotIndex !== -1 ? file.name.substring(dotIndex + 1).toUpperCase() : '无扩展名';
+                window.fileTypes.add(fileType);
+                window.selectedFileTypes.add(fileType);
+            });
+            
+            updateFileTypeFilter();
+        }
 
-function displayList() {
-  updateFileList();
-}
+        // 更新文件类型筛选器
+        function updateFileTypeFilter() {
+            const filterList = document.getElementById('filterList');
+            if (!filterList) return;
+            
+            filterList.innerHTML = '';
+            window.fileTypes.forEach(fileType => {
+                const filterItem = document.createElement('div');
+                filterItem.className = 'filter-item';
+                
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.id = `type-${fileType}`;
+                checkbox.className = 'file-type-checkbox';
+                checkbox.value = fileType;
+                checkbox.checked = true;
+                
+                checkbox.addEventListener('change', function() {
+                    if (this.checked) {
+                        window.selectedFileTypes.add(fileType);
+                    } else {
+                        window.selectedFileTypes.delete(fileType);
+                    }
+                    updateFileList();
+                });
+                
+                const label = document.createElement('label');
+                label.htmlFor = `type-${fileType}`;
+                label.textContent = fileType;
+                
+                filterItem.appendChild(checkbox);
+                filterItem.appendChild(label);
+                filterList.appendChild(filterItem);
+            });
+            
+            document.getElementById('fileFilter').classList.add('show');
+        }
 
-// 格式化文件大小
-function formatFileSize(bytes) {
-  if (bytes === 0) return '0 B';
-  const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-}
+        // 更新文件列表
+        function updateFileList() {
+            const fileItems = document.getElementById('fileItems');
+            if (!fileItems) return;
+            
+            fileItems.innerHTML = '';
+            const filteredFiles = window.selectedFiles.filter(file => {
+                const dotIndex = file.name.lastIndexOf('.');
+                const fileType = dotIndex !== -1 ? file.name.substring(dotIndex + 1).toUpperCase() : '无扩展名';
+                return window.selectedFileTypes.has(fileType);
+            });
+            
+            filteredFiles.forEach((f, i) => {
+                const div = document.createElement('div');
+                div.className = 'file-item';
+                
+                const nameSpan = document.createElement('span');
+                nameSpan.className = 'file-name';
+                nameSpan.textContent = `${i + 1}. ${f.name}`;
+                
+                const sizeSpan = document.createElement('span');
+                sizeSpan.className = 'file-size';
+                sizeSpan.textContent = formatFileSize(f.size);
+                
+                div.appendChild(nameSpan);
+                div.appendChild(sizeSpan);
+                fileItems.appendChild(div);
+            });
+            
+            document.getElementById('fileCount').textContent = filteredFiles.length;
+            
+            if (filteredFiles.length === 0) {
+                fileItems.innerHTML = '<div style="text-align: center; padding: 20px; color: #6c757d;">没有符合筛选条件的文件</div>';
+            }
+            
+            document.getElementById('fileList').classList.add('show');
+        }
 
-// 生成Excel
-function generateExcel() {
-  btnGenerate.style.display = 'none';
-  
-  // 显示生成状态
-  showStatus('<i class="fas fa-spinner fa-spin"></i> 正在生成Excel文件，请稍候...', 'info');
-  
-  setTimeout(() => {
-    const filteredFiles = selectedFiles.filter(file => {
-      const fileName = file.name;
-      const dotIndex = fileName.lastIndexOf('.');
-      const fileType = dotIndex !== -1 ? fileName.substring(dotIndex + 1).toUpperCase() : '无扩展名';
-      return selectedFileTypes.has(fileType);
-    });
-    
-    const html = genExcel(filteredFiles);
-    downloadExcel(html);
-    btnGenerate.style.display = 'flex';
-    showStatus('<i class="fas fa-check-circle"></i> Excel文件已生成并开始下载', 'success');
-  }, 1000);
-}
+        // 更新统计信息
+        function updateStats() {
+            const fileCount = window.selectedFiles.length;
+            const totalSize = window.selectedFiles.reduce((sum, file) => sum + file.size, 0);
+            
+            document.getElementById('fileCount').textContent = fileCount;
+            document.getElementById('totalSize').textContent = formatFileSize(totalSize);
+            document.getElementById('folderName').textContent = window.folderName || '未知文件夹';
+            
+            document.getElementById('statsContainer').style.display = 'flex';
+        }
 
-// 绑定生成按钮点击事件
-btnGenerate.addEventListener('click', generateExcel);
+        // 显示文件列表
+        function displayList() {
+            updateFileList();
+        }
 
-// 生成Excel内容
-function genExcel(files) {
-  const totalSize = files.reduce((sum, file) => sum + file.size, 0);
-  const fileExtensions = [...new Set(files.map(f => {
-    const parts = f.name.split('.');
-    return parts.length > 1 ? parts.pop().toUpperCase() : '无扩展名';
-  }))];
-  
-  let h = '<meta charset="utf-8"><style>'
-      + 'body { font-family: "Segoe UI", Arial, sans-serif; margin: 20px; color: #333; background: #f8f9fa; }'
-      + 'h1 { text-align: center; color: #2c3e50; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 3px solid #3498db; font-size: 28px; font-weight: 700; }'
-      + 'table { border-collapse: collapse; width: 100%; font-size: 14px; margin-bottom: 25px; box-shadow: 0 5px 15px rgba(0,0,0,0.08); border-radius: 10px; overflow: hidden; }'
-      + 'th, td { border: 1px solid #e0e0e0; padding: 14px 16px; text-align: left; }'
-      + 'th { background: linear-gradient(to bottom, #3498db, #2980b9); color: white; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; font-size: 15px; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }'
-      + 'tr:nth-child(even) { background: #f8f9fa; }'
-      + 'tr:hover { background: #e8f4fd; }'
-      + '.summary { background: white; padding: 25px; border-radius: 10px; margin-bottom: 30px; box-shadow: 0 5px 15px rgba(0,0,0,0.08); border-left: 5px solid #3498db; }'
-      + '.summary p { margin: 10px 0; font-size: 15px; }'
-      + '.summary strong { color: #2c3e50; }'
-      + '.header-row { background: #2c3e50 !important; color: white; font-weight: bold; text-align: center; font-size: 18px; }'
-      + '.file-type { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 11px; background: #e9ecef; color: #495057; font-weight: 600; }'
-      + '.footer { text-align: center; margin-top: 30px; color: #7f8c8d; font-size: 13px; border-top: 1px solid #ecf0f1; padding-top: 20px; }'
-      + '</style>';
-  
-  h += '<h1>📁 文件清单</h1>';
-  
-  // 摘要信息
-  h += '<div class="summary">';
-  h += '<p><strong>📂 文件夹名称:</strong> ' + esc(folderName || '未知文件夹') + '</p>';
-  h += '<p><strong>📅 生成时间:</strong> ' + new Date().toLocaleString('zh-CN') + '</p>';
-  h += '<p><strong>📊 文件总数:</strong> ' + files.length + ' 个文件</p>';
-  h += '<p><strong>💾 总大小:</strong> ' + formatFileSize(totalSize) + '</p>';
-  h += '<p><strong>🔧 包含的文件类型:</strong> ' + fileExtensions.join(', ') + '</p>';
-  h += '<p><strong>🛠️ 生成工具:</strong> 文件清单生成器 V1.1.0</p>';
-  h += '</div>';
-  
-  // 文件列表表格
-  h += '<table>';
-  h += '<tr class="header-row"><td colspan="5">📋 文件清单</td></tr>';
-  h += '<tr><th>#</th><th>📄 文件名</th><th>📝 不包含后缀的文件名</th><th>💾 大小</th><th>📅 修改时间</th></tr>';
-  
-  files.forEach((f, i) => {
-    const fileNameWithoutExt = f.name.replace(/\.[^/.]+$/, "");
-    
-    h += `<tr>
-            <td>${i + 1}</td>
-            <td>${esc(f.name)}</td>
-            <td>${esc(fileNameWithoutExt)}</td>
-            <td>${formatFileSize(f.size)}</td>
-            <td>${new Date(f.lastModified).toLocaleString('zh-CN')}</td>
-          </tr>`;
-  });
-  
-  h += '</table>';
-  
-  // 统计信息表格
-  h += '<table>';
-  h += '<tr class="header-row"><td colspan="2">📊 统计信息</td></tr>';
-  h += '<tr><th>📈 项目</th><th>🔢 数值</th></tr>';
-  h += `<tr><td>文件总数</td><td>${files.length} 个文件</td></tr>`;
-  h += `<tr><td>总大小</td><td>${formatFileSize(totalSize)}</td></tr>`;
-  h += `<tr><td>平均文件大小</td><td>${formatFileSize(totalSize / files.length)}</td></tr>`;
-  h += `<tr><td>文件类型数量</td><td>${fileExtensions.length} 种类型</td></tr>`;
-  h += '</table>';
-  
-  // 页脚
-  h += '<div class="footer">';
-  h += '<p>🛠️ 生成工具：文件清单生成器 | 👨‍💻 作者：技术开发二部 | 🔗 GitHub: https://github.com/caifugao110/FileList_Generator</p>';
-  h += '</div>';
-  
-  return h;
-}
+        // 格式化文件大小
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
 
-// HTML转义
-function esc(s) {
-  return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
+        // 生成Excel
+        window.generateExcel = function() {
+            try {
+                const btn = document.getElementById('btnGenerate');
+                if (btn) btn.style.display = 'none';
+                
+                showStatus('<i class="fas fa-spinner fa-spin"></i> 正在生成Excel文件...', 'info');
+                
+                setTimeout(() => {
+                    const filteredFiles = window.selectedFiles.filter(file => {
+                        const dotIndex = file.name.lastIndexOf('.');
+                        const fileType = dotIndex !== -1 ? file.name.substring(dotIndex + 1).toUpperCase() : '无扩展名';
+                        return window.selectedFileTypes.has(fileType);
+                    });
+                    
+                    const html = genExcel(filteredFiles);
+                    downloadExcel(html);
+                    if (btn) btn.style.display = 'flex';
+                    showStatus('<i class="fas fa-check-circle"></i> Excel已生成并下载', 'success');
+                }, 800);
+            } catch (e) {
+                console.error('生成Excel失败:', e);
+                showStatus('生成Excel失败，请重试', 'error');
+                document.getElementById('btnGenerate').style.display = 'flex';
+            }
+        }
 
-// 下载Excel文件
-function downloadExcel(html) {
-  const timestamp = new Date().toISOString().replace(/[-:]/g, '').split('.')[0];
-  const blob = new Blob(['\ufeff' + html], {type: 'application/vnd.ms-excel;charset=utf-8'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `文件清单_${folderName || '文件夹'}_${timestamp}.xls`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}
+        // 生成Excel内容 - 修改为与V0.8一致的格式
+        function genExcel(files) {
+            const totalSize = files.reduce((sum, file) => sum + file.size, 0);
+            const fileExtensions = [...new Set(files.map(f => {
+                const parts = f.name.split('.');
+                return parts.length > 1 ? parts.pop().toUpperCase() : '无扩展名';
+            }))];
+            
+            let h = '<meta charset="utf-8"><style>'
+                + 'body { font-family: "Segoe UI", Arial, sans-serif; margin: 20px; color: #333; background: #f8f9fa; }'
+                + 'h1 { text-align: center; color: #2c3e50; margin-bottom: 25px; padding-bottom: 15px; border-bottom: 3px solid #3498db; font-size: 28px; font-weight: 700; }'
+                + 'table { border-collapse: collapse; width: 100%; font-size: 14px; margin-bottom: 25px; box-shadow: 0 5px 15px rgba(0,0,0,0.08); border-radius: 10px; overflow: hidden; }'
+                + 'th, td { border: 1px solid #e0e0e0; padding: 14px 16px; text-align: left; }'
+                + 'th { background: linear-gradient(to bottom, #3498db, #2980b9); color: white; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; font-size: 15px; text-shadow: 0 1px 2px rgba(0,0,0,0.2); }'
+                + 'tr:nth-child(even) { background: #f8f9fa; }'
+                + 'tr:hover { background: #e8f4fd; }'
+                + '.summary { background: white; padding: 25px; border-radius: 10px; margin-bottom: 30px; box-shadow: 0 5px 15px rgba(0,0,0,0.08); border-left: 5px solid #3498db; }'
+                + '.summary p { margin: 10px 0; font-size: 15px; }'
+                + '.summary strong { color: #2c3e50; }'
+                + '.header-row { background: #2c3e50 !important; color: white; font-weight: bold; text-align: center; font-size: 18px; }'
+                + '.file-type { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 11px; background: #e9ecef; color: #495057; font-weight: 600; }'
+                + '.footer { text-align: center; margin-top: 30px; color: #7f8c8d; font-size: 13px; border-top: 1px solid #ecf0f1; padding-top: 20px; }'
+                + '</style>';
+            
+            h += '<h1>📁 文件清单</h1>';
+            
+            // 摘要信息 - 与V0.8保持一致
+            h += '<div class="summary">';
+            h += '<p><strong>📂 文件夹名称:</strong> ' + esc(window.folderName || '未知文件夹') + '</p>';
+            h += '<p><strong>📅 生成时间:</strong> ' + new Date().toLocaleString('zh-CN') + '</p>';
+            h += '<p><strong>📊 文件总数:</strong> ' + files.length + ' 个文件</p>';
+            h += '<p><strong>💾 总大小:</strong> ' + formatFileSize(totalSize) + '</p>';
+            h += '<p><strong>🔧 包含的文件类型:</strong> ' + fileExtensions.join(', ') + '</p>';
+            h += '<p><strong>🛠️ 生成工具:</strong> 文件清单生成器 V1.1.0</p>';
+            h += '</div>';
+            
+            h += '<table>';
+            h += '<tr class="header-row"><td colspan="5">📋 文件清单</td></tr>';
+            h += `<tr>
+                <th style="background:#e74c3c;color:#fff">🔢 序号</th>
+                <th style="background:#e74c3c;color:#fff">📄 文件名</th>
+                <th style="background:#e74c3c;color:#fff">📝 不包含后缀的文件名</th>
+                <th style="background:#e74c3c;color:#fff">💾 大小</th>
+                <th style="background:#e74c3c;color:#fff">📅 修改时间</th>
+            </tr>`;
+            
+            files.forEach((f, i) => {
+                const fileNameWithoutExt = f.name.replace(/\.[^/.]+$/, "");
+                
+                h += `<tr>
+                        <td>${i + 1}</td>
+                        <td>${esc(f.name)}</td>
+                        <td>${esc(fileNameWithoutExt)}</td>
+                        <td>${formatFileSize(f.size)}</td>
+                        <td>${new Date(f.lastModified).toLocaleString('zh-CN')}</td>
+                    </tr>`;
+            });
+            
+            h += '</table>';
+            
 
-// 显示状态信息
-function showStatus(msg, type) {
-  statusBox.innerHTML = msg;
-  statusBox.className = 'status ' + type;
-  
-  // 使用requestAnimationFrame确保样式变化被浏览器识别
-  requestAnimationFrame(() => {
-    statusBox.classList.add('show');
-  });
-  
-  // 4秒后自动隐藏，但如果是错误信息则保留更长时间
-  const timeout = type === 'error' ? 6000 : 4000;
-  setTimeout(() => {
-    statusBox.classList.remove('show');
-    setTimeout(() => {
-      statusBox.style.display = 'none';
-    }, 500);
-  }, timeout);
-}
-</script>
+            h += '<table>';
+            h += '<tr class="header-row"><td colspan="2">📊 统计信息</td></tr>';
+            h += '<tr>'
+                + '<th style="background:#e74c3c;color:#fff">📈 项目</th>'
+                + '<th style="background:#e74c3c;color:#fff">🔢 数值</th>'
+                + '</tr>';
+            h += `<tr><td>文件总数</td><td>${files.length} 个文件</td></tr>`;
+            h += `<tr><td>总大小</td><td>${formatFileSize(totalSize)}</td></tr>`;
+            h += `<tr><td>平均文件大小</td><td>${formatFileSize(totalSize / files.length)}</td></tr>`;
+            h += `<tr><td>文件类型数量</td><td>${fileExtensions.length} 种类型</td></tr>`;
+            h += '</table>';
+            
+            // 页脚 - 与V0.8保持一致
+            h += '<div class="footer">';
+            h += '<p>🛠️ 生成工具：文件清单生成器 | 👨‍💻 作者：技术开发二部 | 🔗 GitHub: https://github.com/caifugao110/FileList_Generator</p>';
+            h += '</div>';
+            
+            return h;
+        }
+
+        // HTML转义
+        function esc(s) {
+            return s.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+        }
+
+        // 下载Excel
+        function downloadExcel(html) {
+            const timestamp = new Date().toISOString().replace(/[-:]/g, '').split('.')[0];
+            const blob = new Blob(['\ufeff' + html], {type: 'application/vnd.ms-excel;charset=utf-8'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `文件清单_${window.folderName || '文件夹'}_${timestamp}.xls`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        // 显示状态信息
+        window.showStatus = function(msg, type) {
+            const statusBox = document.getElementById('status');
+            if (!statusBox) return;
+            
+            statusBox.innerHTML = msg;
+            statusBox.className = 'status ' + type;
+            statusBox.style.display = 'flex'; // 强制显示
+            
+            requestAnimationFrame(() => {
+                statusBox.classList.add('show');
+            });
+            
+            const timeout = type === 'error' ? 6000 : 4000;
+            setTimeout(() => {
+                statusBox.classList.remove('show');
+                setTimeout(() => {
+                    statusBox.style.display = 'none';
+                }, 500);
+            }, timeout);
+        }
+
+        // 拖拽处理函数
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            document.getElementById('selectArea').classList.add("drag-over");
+            window.isDragging = true;
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            document.getElementById('selectArea').classList.remove("drag-over");
+            window.isDragging = false;
+        }
+
+        async function handleDrop(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            document.getElementById('selectArea').classList.remove("drag-over");
+            window.isDragging = false;
+            
+            try {
+                const items = e.dataTransfer.items;
+                const droppedFiles = [];
+                const droppedFolders = [];
+                
+                for (let i = 0; i < items.length; i++) {
+                    const item = items[i];
+                    if (item.kind === "file") {
+                        const entry = item.webkitGetAsEntry();
+                        if (entry) {
+                            if (entry.isFile) {
+                                droppedFiles.push(item.getAsFile());
+                            } else if (entry.isDirectory) {
+                                droppedFolders.push(entry);
+                            }
+                        }
+                    }
+                }
+                
+                if (droppedFolders.length > 0) {
+                    showStatus("正在读取文件夹内容...", "info");
+                    const folderEntry = droppedFolders[0];
+                    const filesInFolder = await readDirectory(folderEntry);
+                    if (filesInFolder.length > 0) {
+                        processFiles(filesInFolder, false, folderEntry.name);
+                    } else {
+                        showStatus("文件夹为空或无法读取", "error");
+                    }
+                } else if (droppedFiles.length > 0) {
+                    processFiles(droppedFiles, true, "拖拽文件");
+                } else {
+                    showStatus("未检测到文件或文件夹", "warning");
+                }
+            } catch (e) {
+                console.error('拖拽处理失败:', e);
+                showStatus('拖拽处理失败，请重试', 'error');
+            }
+        }
+
+        async function readDirectory(entry) {
+            return new Promise(resolve => {
+                const files = [];
+                const reader = entry.createReader();
+                const readEntries = () => {
+                    reader.readEntries(async (entries) => {
+                        if (!entries.length) {
+                            resolve(files);
+                        } else {
+                            for (const ent of entries) {
+                                if (ent.isFile) {
+                                    const file = await getFile(ent);
+                                    files.push(file);
+                                }
+                                // 不处理子文件夹
+                            }
+                            readEntries();
+                        }
+                    });
+                };
+                readEntries();
+            });
+        }
+
+        function getFile(fileEntry) {
+            return new Promise(resolve => fileEntry.file(resolve));
+        }
+
+        // 检查浏览器兼容性
+        function checkBrowserCompatibility() {
+            const fileInput = document.getElementById('fileInput');
+            const supportsDirectory = !!fileInput?.webkitdirectory;
+            
+            if (!supportsDirectory) {
+                document.getElementById('browserWarning').classList.add('show');
+                showStatus('浏览器不支持文件夹选择，建议使用Chrome最新版', 'warning');
+            }
+        }
+
+        // 页面加载完成后初始化（核心修复：确保所有事件正确绑定）
+        window.onload = function() { // 使用onload确保所有元素加载完成
+            try {
+                console.log('页面加载完成，初始化功能...');
+                
+                // 创建粒子背景
+                createParticles();
+                
+                // 检查浏览器兼容性
+                checkBrowserCompatibility();
+                
+                // 显示欢迎信息
+                showStatus('欢迎使用文件清单生成器！点击上方区域选择文件夹', 'info');
+                
+                // 绑定所有按钮事件（核心修复：直接通过ID获取元素，确保绑定成功）
+                const selectArea = document.getElementById('selectArea');
+                if (selectArea) {
+                    selectArea.addEventListener("click", function(e) {
+                        e.stopPropagation(); // 阻止事件冒泡
+                        window.triggerFileInput();
+                    });
+                    selectArea.addEventListener('keydown', function(e) {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            window.triggerFileInput();
+                        }
+                    });
+                }
+                
+                const btnGenerate = document.getElementById('btnGenerate');
+                if (btnGenerate) {
+                    btnGenerate.addEventListener('click', function(e) {
+                        e.stopPropagation();
+                        window.generateExcel();
+                    });
+                    btnGenerate.addEventListener('keydown', function(e) {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            window.generateExcel();
+                        }
+                    });
+                }
+                
+                // 筛选按钮事件
+                const selectAllTypes = document.getElementById('selectAllTypes');
+                if (selectAllTypes) {
+                    selectAllTypes.addEventListener('click', function() {
+                        document.querySelectorAll('.file-type-checkbox').forEach(checkbox => {
+                            checkbox.checked = true;
+                            window.selectedFileTypes.add(checkbox.value);
+                        });
+                        updateFileList();
+                    });
+                }
+                
+                const deselectAllTypes = document.getElementById('deselectAllTypes');
+                if (deselectAllTypes) {
+                    deselectAllTypes.addEventListener('click', function() {
+                        document.querySelectorAll('.file-type-checkbox').forEach(checkbox => {
+                            checkbox.checked = false;
+                            window.selectedFileTypes.delete(checkbox.value);
+                        });
+                        updateFileList();
+                    });
+                }
+                
+                // 备用文件选择按钮
+                const fallbackFileSelect = document.getElementById('fallbackFileSelect');
+                if (fallbackFileSelect) {
+                    fallbackFileSelect.addEventListener('click', function() {
+                        document.getElementById('fallbackFileInput').click();
+                    });
+                }
+                
+                // 备用文件选择事件
+                const fallbackFileInput = document.getElementById('fallbackFileInput');
+                if (fallbackFileInput) {
+                    fallbackFileInput.addEventListener('change', function(e) {
+                        if (e.target.files.length > 0) {
+                            window.processFiles(Array.from(e.target.files), true);
+                        }
+                    });
+                }
+                
+                // 文件选择事件
+                const fileInput = document.getElementById('fileInput');
+                if (fileInput) {
+                    fileInput.addEventListener('change', function(e) {
+                        if (e.target.files.length > 0) {
+                            window.processFiles(Array.from(e.target.files), false);
+                        }
+                    });
+                }
+                
+                // 拖拽事件
+                if (selectArea) {
+                    selectArea.addEventListener("dragover", handleDragOver);
+                    selectArea.addEventListener("dragleave", handleDragLeave);
+                    selectArea.addEventListener("drop", handleDrop);
+                }
+                document.addEventListener("dragover", (e) => e.preventDefault());
+                document.addEventListener("drop", (e) => e.preventDefault());
+                
+                console.log('初始化完成，所有事件已绑定');
+            } catch (e) {
+                console.error('初始化失败:', e);
+                // 显示初始化失败的提示（直接操作DOM，避免依赖showStatus）
+                const status = document.createElement('div');
+                status.style.position = 'fixed';
+                status.style.bottom = '20px';
+                status.style.left = '50%';
+                status.style.transform = 'translateX(-50%)';
+                status.style.background = '#dc3545';
+                status.style.color = 'white';
+                status.style.padding = '15px';
+                status.style.borderRadius = '8px';
+                status.style.zIndex = '9999';
+                status.innerHTML = '<i class="fas fa-exclamation-circle"></i> 页面加载失败，请刷新重试';
+                document.body.appendChild(status);
+            }
+        }
+    </script>
 </body>
 </html>
